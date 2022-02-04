@@ -13,18 +13,7 @@ AutoConnect Portal(Server); //https://hieromon.github.io/AutoConnect
 AutoConnectConfig ACConfig = AutoConnectConfig(MY_METRIC, nullptr);
 
 
-
-
-void rootPage() {
-  char content[] = "Hello, world";
-  Server.send(200, "text/plain", content);
-}
-
-void setup() {
-  Serial.begin(115200);
-  SetupPreferences();
-
-  Server.on("/", rootPage);
+void SetupNetwork() {
   ACConfig.title = MY_METRIC;
   ACConfig.portalTimeout = 60000;
   ACConfig.autoReconnect = true;
@@ -36,6 +25,65 @@ void setup() {
       MDNS.addService("http", "tcp", 80);
     }
   }
+}
+
+int requestNum = 0;
+void handleGenericArgs() { //Handler
+  for (int i = 0; i < Server.args(); i++) {
+
+    setSetting(Server.argName(i), Server.arg(i), requestNum);
+
+  }
+  Server.sendHeader(LOCATION_HEADER, "/", true); //Redirect to our html web page
+  Server.send(302, TEXT_PLAIN, EMPTY);
+  requestNum++;
+}
+
+void SetupPaths() {
+  //    Server.on("/", HTTP_GET, [&]() {
+  //        String index = readFile("/index.htm"); //TODO change to LittleFs
+  //        if (index == EMPTY) {
+  //            Serial.println("index.html does not exist");
+  //            Server.send(200, TEXT_PLAIN, "index.html does not exist, please upload it via /edit path");
+  //        }
+  //        Server.send(200, TEXT_HTML, index);
+  //    });
+
+  Server.on("/restart", HTTP_GET, [&]() {
+    Server.send(200, TEXT_PLAIN, "Restarting MyMetric");
+    Serial.println(F("Restarting ESP via HTTP command"));
+    delay(1000);
+    ESP.restart();
+  });
+
+  Server.on("/getSettings", HTTP_GET, [&]() {
+    Serial.println(F("Got getSettings request"));
+    Server.send(200, APPLICATION_JSON, getSettings());
+
+  });
+
+  Server.on("/restoreDefaultSettings", HTTP_GET, [&]() {
+    Serial.println(F("Got restoreDefaultSettings request"));
+    restoreDefaultSettings();
+    Server.send(200, TEXT_PLAIN, "Default Settings Restored!");
+  });
+
+  Server.on("/setSettings", HTTP_POST, handleGenericArgs);
+
+
+  Server.onNotFound([&]() {
+    Server.sendHeader(LOCATION_HEADER, "/", true); //Redirect to our html web page
+    Server.send(302, TEXT_PLAIN, EMPTY);
+  });
+}
+
+void setup() {
+  Serial.begin(115200);
+  SetupPreferences();
+  SetupPaths();
+  SetupNetwork();
+
+
 }
 
 void loop() {
