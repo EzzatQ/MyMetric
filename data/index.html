@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+
+        body {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            font-family: verdana ;
+            max-width: 600px;
+        }
+
+        div, input, select {
+            padding: 5px;
+            font-size: 1em;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        input, button, select {
+            width: 50%;
+            border-radius: 20px;
+            border-width: 1px;
+        }
+
+
+        input[type=text], input[type=number], input[type=color], input[type=range], select {
+            float: right;
+        }
+
+        input[type=checkbox] {
+            width: auto;
+        }
+
+        label {
+            float: left;
+            margin-top: 10px;
+        }
+
+        .check-boxes {
+            float: left;
+        }
+
+        input[type=color] {
+            width: 50%;
+            height: 2rem;
+            border: none;
+        }
+
+        button, input[type='button'], input[type='submit'] {
+            cursor: pointer;
+            border: 0;
+            background-color: #1fa3ec;
+            color: #fff;
+            line-height: 2.4rem;
+            font-size: 1.2rem;
+        }
+
+        .check-boxes {
+            margin-left: 12.5%;
+        }
+
+        .bubble {
+            background: #1fa3ec;
+            color: white;
+            padding: 4px 12px;
+            position: absolute;
+            border-radius: 10px;
+            transform: translateX(-50%);
+        }
+
+
+
+    </style>
+    <meta charset="UTF-8">
+    <title>My Metric</title>
+</head>
+<body>
+<h1>My Metric</h1>
+<p>Settings panel</p>
+<form action="/setSettings" method="post">
+    <fieldset>
+        <div>
+            <label for="current-mode">Current Mode:</label>
+            <select id="current-mode" name="current-mode">
+                <option id="mode-off" value="off">Off</option>
+                <option id="mode-time" value="time">Time</option>
+                <option id="mode-weather" value="weather">Weather</option>
+                <option id="mode-stocks" value="stocks">Stocks</option>
+                <option id="mode-cycle" value="cycle">Cycle</option>
+            </select><br>
+        </div>
+        <div>
+            <br><label for="text-color">Text Color:</label>
+            <input id="text-color" name="text-color" type="color"><br>
+        </div>
+        <div>
+            <br><label for="background-color">Background Color:</label>
+            <input id="background-color" name="background-color" type="color"><br><br>
+        </div>
+        <div>
+            <output class="bubble" id="brightness-bubble"></output><br>
+            <label for="brightness">Brightness:</label>
+            <input id="brightness" max="100" min="1" name="brightness" type="range"><br>
+        </div>
+        <div>
+            <br><label for="location">Location:</label>
+            <input id="location" name="location" type="text"><br>
+        </div>
+        <div>
+            <br><label for="displayed-stocks">Displayed Stocks:</label>
+            <input id="displayed-stocks" name="displayed-stocks" type="text"><br><br>
+        </div>
+        <div>
+            <output class="bubble" id="stocks-speed-bubble"></output><br>
+            <label for="stocks-speed">Stocks Speed:</label>
+            <input id="stocks-speed" max="100" min="1" name="stocks-speed" type="range"><br>
+
+        </div>
+
+
+
+        <br><label>Cycle Modes:</label>
+        <div class="check-boxes">
+            <label for="cycle-mode-time">
+                <input  id="cycle-mode-time" name="cycle-modes" type="checkbox" value="time" checked=true>
+                Time
+            </label><br>
+
+            <label  for="cycle-mode-stocks">
+                <input id="cycle-mode-stocks" name="cycle-modes" type="checkbox" value="stocks">
+                Stocks
+            </label><br>
+
+            <label for="cycle-mode-weather">
+                <input  id="cycle-mode-weather" name="cycle-modes" type="checkbox" value="weather">
+                Weather
+            </label><br>
+
+        </div><br><br>
+
+        <br><br><br><br>
+        <output class="bubble" id="cycle-speed-bubble"></output><br>
+        <label for="cycle-speed">Cycle Speed:</label>
+        <input id="cycle-speed" max="100" min="1" name="cycle-speed" type="range" value="50"><br><br>
+
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>
+
+<script>
+
+    httpGetAsync("/getSettings", setCurrentValues);
+    function setBubble(range, bubble) {
+        const val = range.value;
+        const min = range.min ? range.min : 0;
+        const max = range.max ? range.max : 100;
+        const width = range.offsetWidth;
+        const newVal = Number(((val - min) * 100) / (max - min));
+        bubble.innerHTML = val;
+
+        bubble.style.left = `calc(50% + ${newVal * width / 100}px)`;
+    }
+
+    function setCurrentValues(json) {
+        let obj = JSON.parse(json);
+        let global = obj["global"]
+        let stocks = obj["stocks"]
+        let cycle = obj["cycle"]
+        document.getElementById(`mode-${global["current-mode"]}`).selected = true;
+        document.getElementById("text-color").value = global["text-color"];
+        document.getElementById("background-color").value = global["background-color"];
+        document.getElementById("brightness").value = global["brightness"];
+        document.getElementById("location").value = global["location"];
+        document.getElementById("displayed-stocks").value = stocks["displayed"];
+        document.getElementById("stocks-speed").value = stocks["speed"];
+        let cycle_modes = cycle["displayed"];
+        document.getElementById("cycle-mode-time").checked = cycle_modes.includes("time");
+        document.getElementById("cycle-mode-stocks").checked = cycle_modes.includes("stocks");
+        document.getElementById("cycle-mode-weather").checked = cycle_modes.includes("weather");
+        document.getElementById("cycle-speed").value = cycle["speed"];
+
+        let ranges = ["cycle-speed", "stocks-speed", "brightness"];
+        let bubbles = ranges.map(r => `${r}-bubble`);
+
+        for(let i in [0, 1, 2]) {
+            let cycle_speed = document.getElementById(ranges[i]);
+            let cycle_speed_bubble = document.getElementById(bubbles[i]);
+
+            cycle_speed.addEventListener("input", () => {
+                setBubble(cycle_speed, cycle_speed_bubble);
+            });
+            setBubble(cycle_speed, cycle_speed_bubble);
+        }
+    }
+
+    function httpGetAsync(theUrl, callback)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+                callback(xmlHttp.response);
+        }
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous
+        xmlHttp.send(null);
+    }
+</script>
+</body>
+</html>
