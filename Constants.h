@@ -44,4 +44,33 @@ const char LOCATION_HEADER[] = "Location";
 const char PREFERENCES_MANAGER_PREFIX[] = "[Preferences Manager] ";
 const char MY_METRIC_PREFIX[] = "[MyMetric] ";
 const char FILE_MANAGER_PREFIX[] = "[File Manager] ";
+
+static const char PAGE_UPLOAD[] PROGMEM = R"(
+{
+  "uri": "/upload",
+  "title": "Upload",
+  "menu": true,
+  "element": [
+    { "name":"caption", "type":"ACText", "value":"<h2>File uploading platform<h2>" },
+    { "name":"upload_file", "type":"ACFile", "label":"Select file: ", "store":"fs" },
+    { "name":"upload", "type":"ACSubmit", "value":"UPLOAD", "uri":"/upload" }
+  ]
+}
+)";
+
+// Upload result display
+static const char PAGE_BROWSE[] PROGMEM = R"(
+{
+  "uri": "/uploadResult",
+  "title": "Upload",
+  "menu": false,
+  "element": [
+    { "name":"caption", "type":"ACText", "value":"<h2>Uploading ended<h2>" },
+    { "name":"filename", "type":"ACText" },
+    { "name":"size", "type":"ACText", "format":"%s bytes uploaded" },
+    { "name":"content_type", "type":"ACText", "format":"Content: %s" }
+  ]
+}
+)";
+
 #endif //MYMETRIC_CONSTANTS_H

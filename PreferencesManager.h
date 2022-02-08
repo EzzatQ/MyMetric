@@ -14,50 +14,23 @@ Preferences preferences;
 
 void restoreDefaultSettings(){
     preferences.putBool(INITIALIZED, true);
-    preferences.putString(TEXT_COLOR, "white");
-    preferences.putString(BACKGROUND_COLOR, "black");
+    preferences.putString(TEXT_COLOR, "#FFFFFF");
+    preferences.putString(BACKGROUND_COLOR, "#000000");
     preferences.putInt(BRIGHTNESS, 50);
     preferences.putString(CURRENT_MODE, "time");
-    preferences.putString(LOCATION, "Jerusalem");
+    preferences.putString(LOCATION, "Jerusalem, Israel");
     preferences.putInt(GMT_OFFSET, 7200);
     preferences.putString(DISPLAYED_STOCKS, "AAPL#TSLA#AMZN#");
-    preferences.putInt(STOCKS_SPEED, 1000);
+    preferences.putInt(STOCKS_SPEED, 100);
     preferences.putString(CYCLE_MODES, "time#weather#stocks#");
-    preferences.putInt(CYCLE_SPEED, 1000);
+    preferences.putInt(CYCLE_SPEED, 100);
 }
 
 void SetupPreferences() {
   preferences.begin(MY_METRIC, false);
-  bool init = preferences.getBool(INITIALIZED, false);
-  if (!init) {
-    Serial.println("Preferences are not initialized. Setting default settings");
+  if (!preferences.getBool(INITIALIZED, false)) {
     restoreDefaultSettings();
-  } else {
-    Serial.println("Preferences are defined:");
   }
-}
-
-String getSettings() {
-  DynamicJsonDocument doc(1024);
-  doc[TEXT_COLOR] = preferences.getString(TEXT_COLOR, "white");
-  doc[BACKGROUND_COLOR] = preferences.getString(BACKGROUND_COLOR, "black");
-  doc[BRIGHTNESS] = preferences.getInt(BRIGHTNESS, 50);
-  doc[CURRENT_MODE] = preferences.getString(CURRENT_MODE, "time");
-  doc[LOCATION] = preferences.getString(LOCATION, "Jerusalem");
-  doc[GMT_OFFSET] = preferences.getInt(GMT_OFFSET, 7200);
-  JsonArray disp_stocks = doc.createNestedArray(DISPLAYED_STOCKS);
-  for(auto &a: decodeStringArr(preferences.getString(DISPLAYED_STOCKS, "AAPL#TSLA#AMZN#"))) {
-    disp_stocks.add(a);
-  }
-  doc[STOCKS_SPEED] = preferences.getInt(STOCKS_SPEED, 1000);
-  JsonArray cycle_modes = doc.createNestedArray(CYCLE_MODES);
-  for(auto &a: decodeStringArr(preferences.getString(CYCLE_MODES, "time#weather#stocks#"))) {
-    cycle_modes.add(a);
-  }
-  doc[CYCLE_SPEED] = preferences.getInt(CYCLE_SPEED, 1000);
-  String res;
-  serializeJsonPretty(doc, res);
-  return res;
 }
 
 void setLocation(String location) {
@@ -65,7 +38,7 @@ void setLocation(String location) {
 }
 
 String getLocation() {
-  return preferences.getString(LOCATION, "Jerusalem");
+  return preferences.getString(LOCATION);
 }
 
 void setTextColor(String color) {
@@ -73,15 +46,21 @@ void setTextColor(String color) {
 }
 
 String getTextColor() {
-  return preferences.getString(TEXT_COLOR, "white");
+  return preferences.getString(TEXT_COLOR);
 }
 
 void setBackgroundColor(String color) {
+  Serial.println("inside setBackground color after setting and getting");
   preferences.putString(BACKGROUND_COLOR, color);
+  String color1 = preferences.getString(BACKGROUND_COLOR);
+  Serial.println(color1);
 }
 
 String getBackgroundColor() {
-  return preferences.getString(BACKGROUND_COLOR, "black");
+  Serial.print("getting background color: ");
+  String color = preferences.getString(BACKGROUND_COLOR);
+  Serial.println(color);
+  return color;
 }
 
 void setDisplayBrightness(int brightness) {
@@ -89,7 +68,7 @@ void setDisplayBrightness(int brightness) {
 }
 
 int getDisplayBrightness() {
-  return preferences.getInt(BRIGHTNESS, 50);
+  return preferences.getInt(BRIGHTNESS);
 }
 
 void setCurrentMode(String modeName) {
@@ -97,7 +76,7 @@ void setCurrentMode(String modeName) {
 }
 
 String getCurrentMode() {
-  return preferences.getString(CURRENT_MODE, "time");
+  return preferences.getString(CURRENT_MODE);
 }
 
 void setTimeOffsetSetting(int offset) {
@@ -105,7 +84,7 @@ void setTimeOffsetSetting(int offset) {
 }
 
 int getTimeOffsetSetting() {
-  return preferences.getInt(GMT_OFFSET, 7200);
+  return preferences.getInt(GMT_OFFSET);
 }
 
 void setStocksSpeed(int speed) {
@@ -113,22 +92,22 @@ void setStocksSpeed(int speed) {
 }
 
 int getStocksSpeed() {
-  return preferences.getInt(STOCKS_SPEED, 1000);
+  return preferences.getInt(STOCKS_SPEED);
 }
 
 void setDisplayedStocks(vector<String> stocks) {
   String enc = encodeStringArr(stocks);
-  preferences.putString(DISPLAYED_STOCKS, enc);
+  preferences.putString("ds", enc);
 }
 
 void setDisplayedStocks(String stocks) {
   vector<String> dec = decodeStringArr(stocks);
   String enc = encodeStringArr(dec);
-  preferences.putString(DISPLAYED_STOCKS, enc);
+  preferences.putString("ds", enc);
 }
 
 vector<String> getDisplayedStocks() {
-  return decodeStringArr(preferences.getString(DISPLAYED_STOCKS, "AAPL#TSLA#AMZN#"));
+  return decodeStringArr(preferences.getString("ds"));
 }
 
 void setCycleSpeed(int speed) {
@@ -136,7 +115,7 @@ void setCycleSpeed(int speed) {
 }
 
 int getCycleSpeed() {
-  return preferences.getInt(CYCLE_SPEED, 1000);
+  return preferences.getInt(CYCLE_SPEED);
 }
 
 void setCycleModes(vector<String> modes) {
@@ -151,20 +130,35 @@ void setCycleModes(String modes) {
 }
 
 vector<String> getCycleModes() {
-  return decodeStringArr(preferences.getString(CYCLE_MODES, "time#weather#stocks#"));
+  return decodeStringArr(preferences.getString(CYCLE_MODES));
+}
+
+String getSettings() {
+  DynamicJsonDocument doc(1024);
+  doc[TEXT_COLOR] = getTextColor();
+  doc[BACKGROUND_COLOR] = getBackgroundColor();
+  doc[BRIGHTNESS] = getDisplayBrightness();
+  doc[CURRENT_MODE] = getCurrentMode();
+  doc[LOCATION] = getLocation();
+  doc[GMT_OFFSET] = getTimeOffsetSetting();
+  JsonArray disp_stocks = doc.createNestedArray(DISPLAYED_STOCKS);
+  for(auto &a: getDisplayedStocks()) {
+    disp_stocks.add(a);
+  }
+  doc[STOCKS_SPEED] = getStocksSpeed();
+  JsonArray cycle_modes = doc.createNestedArray(CYCLE_MODES);
+  for(auto &a: getCycleModes()) {
+    cycle_modes.add(a);
+  }
+  doc[CYCLE_SPEED] = getCycleSpeed();
+  String res;
+  serializeJsonPretty(doc, res);
+  Serial.print(res);
+  return res;
 }
 
 
-
-
-int setSettingsNum = 0;
-String cycleModes = EMPTY;
-void setSetting(String argName, String argVal, int requestNumber) {
-    if (requestNumber != setSettingsNum) {
-        setCycleModes(cycleModes);
-        setSettingsNum = requestNumber;
-        cycleModes = EMPTY;
-    }
+void setSetting(String argName, String argVal) {
     if (argVal.length() <= 0) {
         if (DEBUG) {
             Serial.print(PREFERENCES_MANAGER_PREFIX);
@@ -172,7 +166,6 @@ void setSetting(String argName, String argVal, int requestNumber) {
             Serial.print(argName);
             Serial.println(F(" not set because value is empty"));
         }
-
         return;
     }
     String message = PREFERENCES_MANAGER_PREFIX;
@@ -207,15 +200,15 @@ void setSetting(String argName, String argVal, int requestNumber) {
     } else if (argName == STOCKS_SPEED) {
         setStocksSpeed(argVal.toInt());
         message += "Set stocks speed to: ";
-        argVal;
         message += argVal;
     } else if (argName == CYCLE_SPEED) {
         setCycleSpeed(argVal.toInt());
         message += "Set cycle speed to: ";
         message += argVal;
     } else if (argName == CYCLE_MODES) {
-        if (cycleModes == EMPTY) cycleModes = argVal;
-        else cycleModes += (", " + argVal);
+        setCycleModes(argVal);
+        message += "Set cycle modes to: ";
+        message += argVal;
     } else if (argName == PLAIN) {
 
     } else {
